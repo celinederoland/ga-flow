@@ -8,13 +8,13 @@ typedef enum {
     MODE_BRANCHES,  // Afficher les branches
     MODE_GRAPH,     // Générer le graph
     MODE_LIST_SPRINTS
-} Operation;
+} RunMode;
 
 // Structure pour stocker les options
 typedef struct {
     const char *repo_path;  // Chemin du repository
     int verbosity;          // Niveau de verbosité (0-3)
-    Operation mode;         // Mode d'opération
+    RunMode mode;         // Mode d'opération
 } RunArguments;
 
 #endif // TYPES_H 

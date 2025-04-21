@@ -4,17 +4,17 @@
 
 void list_sprints_branches(const Graph *graph) {
     if (!graph) {
-        printf("Graph est NULL\n");
+        printf("Graph is NULL\n");
         return;
     }
 
-    printf("\n=== Branches de type Sprint ===\n");
+    printf("\n=== Sprint Branches ===\n");
     for (size_t i = 0; i < graph->branch_count; i++) {
         Branch *branch = graph->branches[i];
         if (branch->type == BRANCH_SPRINT) {
             const char *branch_name = git_reference_shorthand(branch->git_ref);
             printf("Sprint: %s\n", branch_name);
-            printf("  Nombre de commits: %zu\n", branch->commit_count);
+            printf("  Number of commits: %zu\n", branch->commit_count);
             
             // Afficher les commits de la branche
             for (size_t j = 0; j < branch->commit_count; j++) {

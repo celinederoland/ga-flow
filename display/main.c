@@ -10,19 +10,19 @@
 #include "list_branches.h"
 
 void print_usage(const char *program_name) {
-    printf("Usage: %s [options] [chemin_du_repo]\n\n", program_name);
+    printf("Usage: %s [options] [repo_path]\n\n", program_name);
     printf("Options:\n");
-    printf("  --help     Afficher cette aide\n");
-    printf("  -v             Afficher les avertissements\n");
-    printf("  -vv            Afficher les informations\n");
-    printf("  -vvv           Afficher les messages de debug\n");
-    printf("  -h             Afficher l'historique complet\n");
-    printf("  -b             Afficher les branches\n");
-    printf("  -g             Générer le graph\n");
-    printf("  --list-sprints Afficher les branches de sprint\n");
+    printf("  --help     Display this help\n");
+    printf("  -v             Display warnings\n");
+    printf("  -vv            Display information\n");
+    printf("  -vvv           Display debug messages\n");
+    printf("  -h             Display complete history\n");
+    printf("  -b             Display branches\n");
+    printf("  -g             Generate graph\n");
+    printf("  --list-sprints Display sprint branches\n");
     printf("\n");
-    printf("Si aucun mode n'est spécifié (-b ou -g), le mode historique est utilisé par défaut.\n");
-    printf("Si aucun chemin n'est spécifié, le répertoire courant (.) est utilisé.\n");
+    printf("If no mode is specified (-b or -g), history mode is used by default.\n");
+    printf("If no path is specified, the current directory (.) is used.\n");
 }
 
 RunArguments parse_arguments(int argc, char **argv) {
@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
     int error = git_repository_open(&repo, opts.repo_path);
     if (error < 0) {
         const git_error *e = git_error_last();
-        printf("Erreur: Impossible d'ouvrir le dépôt Git à '%s': %s\n", opts.repo_path, e->message);
+        printf("Error: Unable to open Git repository at '%s': %s\n", opts.repo_path, e->message);
         git_libgit2_shutdown();
         return 1;
     }

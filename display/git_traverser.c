@@ -23,7 +23,7 @@ int analyze_branches(git_repository *repo, size_t *branch_count, git_reference *
         }
         if (git_reference_is_branch(ref)) {
             (*branch_refs)[(*branch_count)++] = ref;
-            fprintf(stderr, "Retrieve Branch %zu : %s\n", *branch_count, git_reference_shorthand(ref));
+            fprintf(stderr, "Retrieved Branch %zu : %s\n", *branch_count, git_reference_shorthand(ref));
         } else {
             git_reference_free(ref);
         }
@@ -70,7 +70,7 @@ int get_branch_commits(git_reference *branch_ref, git_commit ***commit_refs, siz
         *capacity *= 2;
         git_commit **temp = realloc(*commit_refs, *capacity * sizeof(git_commit *));
         if (!temp) {
-            fprintf(stderr, "Erreur de réallocation mémoire\n");
+            fprintf(stderr, "Memory reallocation error\n");
             git_commit_free(commit);
             return -1;
         }
@@ -112,7 +112,7 @@ int get_branch_commits(git_reference *branch_ref, git_commit ***commit_refs, siz
             *capacity *= 2;
             git_commit **temp = realloc(*commit_refs, *capacity * sizeof(git_commit *));
             if (!temp) {
-                fprintf(stderr, "Erreur de réallocation mémoire\n");
+                fprintf(stderr, "Memory reallocation error\n");
                 git_commit_free(commit);
                 git_commit_free(parent);
                 return -1;
@@ -141,7 +141,7 @@ int get_branches_commits(git_reference **branch_refs, size_t branch_count, size_
     // Allouer le tableau initial
     *commit_refs = malloc(capacity * sizeof(git_commit *));
     if (!*commit_refs) {
-        fprintf(stderr, "Erreur d'allocation mémoire\n");
+        fprintf(stderr, "Memory allocation error\n");
         return -1;
     }
 
