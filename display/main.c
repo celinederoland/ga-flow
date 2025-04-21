@@ -2,7 +2,7 @@
 #include <string.h>
 #include <git2.h>
 
-#include "model.h"
+#include "git_traverser.h"
 #include "types.h"
 
 void print_usage(const char *program_name) {
@@ -65,9 +65,21 @@ int doAction(git_repository * repo, RunArguments opts) {
         return 1;
     }
 
-    log_branches_details(branch_refs, branch_count);
+    git_commit **commit_refs;
+    size_t commit_count;
+    get_branches_commits(branch_refs, branch_count, &commit_count, &commit_refs);
 
+    // Free each branch reference
+    for (size_t i = 0; i < branch_count; i++) {
+        git_reference_free(branch_refs[i]);
+    }
     free(branch_refs);
+
+    // Free each commit
+    for (size_t i = 0; i < commit_count; i++) {
+        git_commit_free(commit_refs[i]);
+    }
+    free(commit_refs);
     return 0;
 }
 

@@ -17,8 +17,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 # Créer l'exécutable
 add_executable(display main.c
-        model.c
-        model.h
+        git_traverser.c
+        git_traverser.h
         git_util.c
         git_util.h)
 
