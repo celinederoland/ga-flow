@@ -1,51 +1,52 @@
 #include <stdio.h>
 #include "model.h"
+#include "model_debug.h"
+
+static const char *branch_type_to_string(BranchType type) {
+    switch (type) {
+        case BRANCH_MAIN: return "main";
+        case BRANCH_STORY: return "story";
+        case BRANCH_HOTFIX: return "hotfix";
+        case BRANCH_SPRINT: return "sprint";
+        default: return "unknown";
+    }
+}
 
 void print_graph(const Graph *graph) {
     if (!graph) {
-        printf("Graph est NULL\n");
+        printf("Graph is NULL\n");
         return;
     }
 
-    printf("\n=== Contenu du Graph ===\n");
-    printf("Nombre total de branches: %zu\n", graph->branch_count);
-    printf("Nombre total de commits: %zu\n\n", graph->commit_count);
-
-    // Afficher les branches et leurs commits
+    printf("Graph contains %zu branches and %zu commits\n", graph->branch_count, graph->commit_count);
+    printf("\nBranches:\n");
     for (size_t i = 0; i < graph->branch_count; i++) {
-        Branch *branch = graph->branches[i];
+        const Branch *branch = graph->branches[i];
         const char *branch_name = git_reference_shorthand(branch->git_ref);
-        
-        printf("Branche: %s\n", branch_name);
-        printf("Nombre de commits: %zu\n", branch->commit_count);
-        
-        // Afficher les commits de la branche
+        printf("  Branch %zu: %s (type: %s)\n", i, branch_name, branch_type_to_string(branch->type));
+        printf("    Contains %zu commits:\n", branch->commit_count);
         for (size_t j = 0; j < branch->commit_count; j++) {
-            Commit *commit = branch->commits[j];
-            const git_oid *oid = git_commit_id(commit->git_commit);
-            char oid_str[GIT_OID_HEXSZ + 1];
-            git_oid_tostr(oid_str, sizeof(oid_str), oid);
-            
-            printf("  Commit: %s - %s \n", oid_str, git_commit_message(commit->git_commit));
-            printf("    Présent sur %zu branches\n", commit->branch_count);
+            const git_oid *commit_id = git_commit_id(branch->commits[j]->git_commit);
+            char commit_hash[GIT_OID_HEXSZ + 1];
+            git_oid_fmt(commit_hash, commit_id);
+            commit_hash[GIT_OID_HEXSZ] = '\0';
+            printf("      Commit %zu: %s\n", j, commit_hash);
         }
-        printf("\n");
     }
 
-    // Afficher les commits et leurs branches
-    printf("=== Liste des commits ===\n");
+    printf("\nCommits:\n");
     for (size_t i = 0; i < graph->commit_count; i++) {
-        Commit *commit = graph->commits[i];
-        const git_oid *oid = git_commit_id(commit->git_commit);
-        char oid_str[GIT_OID_HEXSZ + 1];
-        git_oid_tostr(oid_str, sizeof(oid_str), oid);
-        
-        printf("Commit: %s - %s \n", oid_str, git_commit_message(commit->git_commit));
-        printf("  Présent sur les branches: ");
+        const Commit *commit = graph->commits[i];
+        const git_oid *commit_id = git_commit_id(commit->git_commit);
+        char commit_hash[GIT_OID_HEXSZ + 1];
+        git_oid_fmt(commit_hash, commit_id);
+        commit_hash[GIT_OID_HEXSZ] = '\0';
+        printf("  Commit %zu: %s\n", i, commit_hash);
+        printf("    Present in %zu branches:\n", commit->branch_count);
         for (size_t j = 0; j < commit->branch_count; j++) {
             const char *branch_name = git_reference_shorthand(commit->branches[j]->git_ref);
-            printf("%s ", branch_name);
+            printf("      Branch %zu: %s (type: %s)\n", j, branch_name, 
+                   branch_type_to_string(commit->branches[j]->type));
         }
-        printf("\n\n");
     }
 }

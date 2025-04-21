@@ -8,6 +8,14 @@ typedef struct Branch Branch;
 typedef struct Commit Commit;
 typedef struct Graph Graph;
 
+typedef enum {
+    BRANCH_MAIN,
+    BRANCH_STORY,
+    BRANCH_HOTFIX,
+    BRANCH_SPRINT,
+    BRANCH_UNKNOWN
+} BranchType;
+
 // Structure pour un commit dans notre modèle
 struct Commit {
     git_commit *git_commit;  // Pointeur vers le commit Git
@@ -20,6 +28,7 @@ struct Branch {
     git_reference *git_ref;  // Pointeur vers la référence Git
     Commit **commits;        // Liste des commits de cette branche
     size_t commit_count;     // Nombre de commits dans cette branche
+    BranchType type;
 };
 
 // Structure principale du graph

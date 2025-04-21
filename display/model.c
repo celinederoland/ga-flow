@@ -1,6 +1,30 @@
 #include "model.h"
 #include "git_traverser.h"
 #include "model_debug.h"
+#include <string.h>
+
+static BranchType determine_branch_type(const char *branch_name) {
+    if (strcmp(branch_name, "main") == 0 || strcmp(branch_name, "master") == 0) {
+        return BRANCH_MAIN;
+    } else if (strncmp(branch_name, "story/", 6) == 0) {
+        return BRANCH_STORY;
+    } else if (strncmp(branch_name, "hotfix/", 7) == 0) {
+        return BRANCH_HOTFIX;
+    } else if (strncmp(branch_name, "sprint/", 7) == 0) {
+        return BRANCH_SPRINT;
+    }
+    return BRANCH_UNKNOWN;
+}
+
+static const char *branch_type_to_string(BranchType type) {
+    switch (type) {
+        case BRANCH_MAIN: return "main";
+        case BRANCH_STORY: return "story";
+        case BRANCH_HOTFIX: return "hotfix";
+        case BRANCH_SPRINT: return "sprint";
+        default: return "unknown";
+    }
+}
 
 int fillModel(git_repository * repo) {
     git_reference **branch_refs;
@@ -33,6 +57,7 @@ int fillModel(git_repository * repo) {
         graph.branches[i]->git_ref = branch_refs[i];
         graph.branches[i]->commits = NULL;
         graph.branches[i]->commit_count = 0;
+        graph.branches[i]->type = determine_branch_type(git_reference_shorthand(branch_refs[i]));
 
         // Récupérer les commits de la branche
         git_commit **branch_commits = NULL;
