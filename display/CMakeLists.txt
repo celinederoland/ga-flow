@@ -19,7 +19,11 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_executable(display main.c
         git_traverser.c
         git_traverser.h
-        )
+        model.c
+        model.h
+        model_debug.c
+        model_debug.h
+)
 
 # Lier les bibliothèques
 target_link_libraries(display ${GIT2_LIBRARY})
