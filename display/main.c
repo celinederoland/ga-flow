@@ -1,8 +1,9 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <git2.h>
 #include "types.h"
+#include "model.h"
+#include "model_tool.h"
 
 void print_usage(const char *program_name) {
     printf("Usage: %s [options] [chemin_du_repo]\n\n", program_name);
@@ -56,34 +57,6 @@ RunArguments parse_arguments(int argc, char **argv) {
     return opts;
 }
 
-int validate_repository(const char *repo_path) {
-    git_repository *repo = NULL;
-    int error = git_repository_open(&repo, repo_path);
-    
-    if (error < 0) {
-        const git_error *e = git_error_last();
-        printf("Erreur: Impossible d'ouvrir le dépôt Git à '%s': %s\n", repo_path, e->message);
-        return 0;
-    }
-
-    // Vérifier si c'est un dépôt bare
-    if (git_repository_is_bare(repo)) {
-        printf("Erreur: Le dépôt à '%s' est un dépôt bare. Veuillez utiliser un dépôt de travail.\n", repo_path);
-        git_repository_free(repo);
-        return 0;
-    }
-
-    // Vérifier si c'est un dépôt shallow
-    if (git_repository_is_shallow(repo)) {
-        printf("Erreur: Le dépôt à '%s' est un dépôt shallow. Veuillez utiliser un dépôt complet.\n", repo_path);
-        git_repository_free(repo);
-        return 0;
-    }
-
-    git_repository_free(repo);
-    return 1;
-}
-
 int main(int argc, char **argv) {
     // Initialiser libgit2
     git_libgit2_init();
@@ -98,34 +71,39 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    // Valider le dépôt Git
-    if (!validate_repository(opts.repo_path)) {
+    // Ouvrir le repository
+    git_repository *repo = NULL;
+    int error = git_repository_open(&repo, opts.repo_path);
+    if (error < 0) {
+        const git_error *e = git_error_last();
+        printf("Erreur: Impossible d'ouvrir le dépôt Git à '%s': %s\n", opts.repo_path, e->message);
         git_libgit2_shutdown();
         return 1;
     }
 
-    // Afficher les options choisies (pour debug)
-    printf("Options choisies:\n");
-    printf("  Repository: %s\n", opts.repo_path);
-    printf("  Verbosité: %d\n", opts.verbosity);
-    printf("  Mode: ");
-    switch (opts.mode) {
-        case MODE_HISTORY:
-            printf("Historique\n");
-            break;
-        case MODE_BRANCHES:
-            printf("Branches\n");
-            break;
-        case MODE_GRAPH:
-            printf("Graph\n");
-            break;
-        default:
-            printf("Inconnu\n");
+    // Créer et analyser le modèle
+    GraphModel *model = create_model(repo);
+    if (!model) {
+        printf("Erreur: Impossible de créer le modèle\n");
+        git_repository_free(repo);
+        git_libgit2_shutdown();
+        return 1;
     }
 
-    // TODO: Implémenter les différentes fonctionnalités selon le mode
+    if (analyze_repository(model) < 0) {
+        printf("Erreur: Impossible d'analyser le repository\n");
+        free_model(model);
+        git_repository_free(repo);
+        git_libgit2_shutdown();
+        return 1;
+    }
 
-    // Nettoyer libgit2
+    // Afficher le modèle
+    print_model(model);
+
+    // Nettoyer
+    free_model(model);
+    git_repository_free(repo);
     git_libgit2_shutdown();
     return 0;
 }

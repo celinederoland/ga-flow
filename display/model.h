@@ -65,7 +65,4 @@ Branch* add_branch(GraphModel *model, const char *name, BranchType type);
 Commit* add_commit(GraphModel *model, Branch *branch, const git_oid *oid, CommitType type);
 Merge* add_merge(GraphModel *model, Commit *from, Commit *to, Branch *target_branch);
 
-// Fonctions pour analyser le repository
-int analyze_repository(GraphModel *model);
-
 #endif // MODEL_H 
