@@ -39,6 +39,8 @@ struct Graph {
     size_t commit_count;     // Nombre de commits
 };
 
-int fillModel(git_repository * repo);
+int fillModel(git_repository * repo, Graph * graph);
+
+void freeGraph(const Graph *graph);
 
 #endif // MODEL_H

@@ -3,6 +3,7 @@
 #include <git2.h>
 
 #include "model.h"
+#include "model_debug.h"
 #include "types.h"
 
 void print_usage(const char *program_name) {
@@ -58,8 +59,10 @@ RunArguments parse_arguments(int argc, char **argv) {
 }
 
 
-int doAction(git_repository * repo, RunArguments opts) {
-   return fillModel(repo);
+int doAction(const Graph * graph, RunArguments opts) {
+    printf("do an action\n");
+    print_graph(graph);
+    return 0;
 }
 
 int main(int argc, char **argv) {
@@ -86,9 +89,20 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    const int r = doAction(repo, opts);
+    Graph graph = {
+        .branches = NULL,
+        .branch_count = 0,
+        .commits = NULL,
+        .commit_count = 0
+    };
+    const int r = fillModel(repo, &graph);
+    if (r != 0) {
+        return r;
+    }
+    const int r2 = doAction(&graph, opts);
 
+    freeGraph(&graph);
     git_repository_free(repo);
     git_libgit2_shutdown();
-    return r;
+    return r2;
 }
