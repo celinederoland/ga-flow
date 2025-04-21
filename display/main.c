@@ -1,20 +1,25 @@
 #include <stdio.h>
 #include <string.h>
 #include <git2.h>
+#include <getopt.h>
 
 #include "model.h"
 #include "model_debug.h"
 #include "types.h"
+#include "git_traverser.h"
+#include "list_branches.h"
 
 void print_usage(const char *program_name) {
     printf("Usage: %s [options] [chemin_du_repo]\n\n", program_name);
     printf("Options:\n");
-    printf("  -h, --help     Afficher cette aide\n");
+    printf("  --help     Afficher cette aide\n");
     printf("  -v             Afficher les avertissements\n");
     printf("  -vv            Afficher les informations\n");
     printf("  -vvv           Afficher les messages de debug\n");
+    printf("  -h             Afficher l'historique complet\n");
     printf("  -b             Afficher les branches\n");
     printf("  -g             Générer le graph\n");
+    printf("  --list-sprints Afficher les branches de sprint\n");
     printf("\n");
     printf("Si aucun mode n'est spécifié (-b ou -g), le mode historique est utilisé par défaut.\n");
     printf("Si aucun chemin n'est spécifié, le répertoire courant (.) est utilisé.\n");
@@ -31,7 +36,7 @@ RunArguments parse_arguments(int argc, char **argv) {
         // Options avec un seul tiret
         if (argv[i][0] == '-' && argv[i][1] != '-') {
             if (strcmp(argv[i], "-h") == 0) {
-                opts.mode = MODE_HELP;
+                opts.mode = MODE_HISTORY;
                 return opts;
             } else if (strcmp(argv[i], "-b") == 0) {
                 opts.mode = MODE_BRANCHES;
@@ -47,6 +52,8 @@ RunArguments parse_arguments(int argc, char **argv) {
             if (strcmp(argv[i], "--help") == 0) {
                 opts.mode = MODE_HELP;
                 return opts;
+            } else if (strcmp(argv[i], "--list-sprints") == 0) {
+                opts.mode = MODE_LIST_SPRINTS;
             }
         }
         // Argument qui n'est pas une option (doit être le chemin du repo)
@@ -58,8 +65,12 @@ RunArguments parse_arguments(int argc, char **argv) {
     return opts;
 }
 
-
-int doAction(const Graph * graph, RunArguments opts) {
+int doAction(const Graph *graph, RunArguments opts) {
+    if (opts.mode == MODE_LIST_SPRINTS) {
+        list_sprints_branches(graph);
+        return 0;
+    }
+    
     printf("do an action\n");
     print_graph(graph);
     return 0;
@@ -79,7 +90,6 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    // Ouvrir le repository
     git_repository *repo = NULL;
     int error = git_repository_open(&repo, opts.repo_path);
     if (error < 0) {

@@ -23,6 +23,8 @@ add_executable(display main.c
         model.h
         model_debug.c
         model_debug.h
+        list_branches.c
+        list_branches.h
 )
 
 # Lier les bibliothèques
