@@ -6,7 +6,8 @@ typedef enum {
     MODE_HELP,      // Afficher l'aide
     MODE_HISTORY,   // Afficher l'historique
     MODE_BRANCHES,  // Afficher les branches
-    MODE_GRAPH      // Générer le graph
+    MODE_GRAPH,     // Générer le graph
+    MODE_LIST_SPRINTS
 } Operation;
 
 // Structure pour stocker les options
