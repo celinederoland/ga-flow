@@ -26,7 +26,7 @@ void print_graph(const Graph *graph) {
             char oid_str[GIT_OID_HEXSZ + 1];
             git_oid_tostr(oid_str, sizeof(oid_str), oid);
             
-            printf("  Commit: %s\n", oid_str);
+            printf("  Commit: %s - %s \n", oid_str, git_commit_message(commit->git_commit));
             printf("    Présent sur %zu branches\n", commit->branch_count);
         }
         printf("\n");
@@ -40,7 +40,7 @@ void print_graph(const Graph *graph) {
         char oid_str[GIT_OID_HEXSZ + 1];
         git_oid_tostr(oid_str, sizeof(oid_str), oid);
         
-        printf("Commit: %s\n", oid_str);
+        printf("Commit: %s - %s \n", oid_str, git_commit_message(commit->git_commit));
         printf("  Présent sur les branches: ");
         for (size_t j = 0; j < commit->branch_count; j++) {
             const char *branch_name = git_reference_shorthand(commit->branches[j]->git_ref);

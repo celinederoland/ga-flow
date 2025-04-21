@@ -16,6 +16,15 @@ int fillModel(git_repository * repo) {
         .commit_count = 0
     };
 
+    // Initialiser le tableau des commits
+    size_t commit_capacity = 10;
+    graph.commits = malloc(commit_capacity * sizeof(Commit *));
+    if (!graph.commits) {
+        return 1;
+    }
+    graph.commit_count = 0;
+
+    // Initialiser le tableau des branches
     graph.branches = malloc(sizeof(Branch *) * branch_count);
     graph.branch_count = branch_count;
 
@@ -24,14 +33,79 @@ int fillModel(git_repository * repo) {
         graph.branches[i]->git_ref = branch_refs[i];
         graph.branches[i]->commits = NULL;
         graph.branches[i]->commit_count = 0;
+
+        // Récupérer les commits de la branche
+        git_commit **branch_commits = NULL;
+        size_t branch_commit_count = 0;
+        size_t branch_commit_capacity = 10;
+        branch_commits = malloc(branch_commit_capacity * sizeof(git_commit *));
+
+        if (get_branch_commits(branch_refs[i], &branch_commits, &branch_commit_count, &branch_commit_capacity) != 0) {
+            free(branch_commits);
+            continue;
+        }
+
+        // Pour chaque commit de la branche
+        for (size_t j = 0; j < branch_commit_count; j++) {
+            git_commit *current_commit = branch_commits[j];
+            const git_oid *commit_id = git_commit_id(current_commit);
+
+            // Vérifier si le commit existe déjà dans le graph
+            Commit *existing_commit = NULL;
+            for (size_t k = 0; k < graph.commit_count; k++) {
+                const git_oid *existing_id = git_commit_id(graph.commits[k]->git_commit);
+                if (git_oid_cmp(commit_id, existing_id) == 0) {
+                    existing_commit = graph.commits[k];
+                    break;
+                }
+            }
+
+            if (existing_commit) {
+                // Le commit existe déjà, on l'ajoute à la branche
+                graph.branches[i]->commits = realloc(graph.branches[i]->commits, 
+                    (graph.branches[i]->commit_count + 1) * sizeof(Commit *));
+                graph.branches[i]->commits[graph.branches[i]->commit_count++] = existing_commit;
+
+                // On ajoute la branche à la liste des branches du commit
+                existing_commit->branches = realloc(existing_commit->branches,
+                    (existing_commit->branch_count + 1) * sizeof(Branch *));
+                existing_commit->branches[existing_commit->branch_count++] = graph.branches[i];
+            } else {
+                // Le commit n'existe pas, on le crée
+                if (graph.commit_count >= commit_capacity) {
+                    commit_capacity *= 2;
+                    Commit **temp = realloc(graph.commits, commit_capacity * sizeof(Commit *));
+                    if (!temp) {
+                        free(branch_commits);
+                        continue;
+                    }
+                    graph.commits = temp;
+                }
+
+                Commit *new_commit = malloc(sizeof(Commit));
+                if (!new_commit) {
+                    free(branch_commits);
+                    continue;
+                }
+
+                new_commit->git_commit = current_commit;
+                new_commit->branches = malloc(sizeof(Branch *));
+                new_commit->branches[0] = graph.branches[i];
+                new_commit->branch_count = 1;
+
+                graph.commits[graph.commit_count++] = new_commit;
+
+                // Ajouter le commit à la branche
+                graph.branches[i]->commits = realloc(graph.branches[i]->commits,
+                    (graph.branches[i]->commit_count + 1) * sizeof(Commit *));
+                graph.branches[i]->commits[graph.branches[i]->commit_count++] = new_commit;
+            }
+        }
+
+        free(branch_commits);
     }
 
     print_graph(&graph);
-
-    git_commit **commit_refs;
-    size_t commit_count;
-    get_branches_commits(branch_refs, branch_count, &commit_count, &commit_refs);
-
 
     // Free each branch and its reference
     for (size_t i = 0; i < graph.branch_count; i++) {
@@ -46,11 +120,10 @@ int fillModel(git_repository * repo) {
     free(branch_refs);
 
     // Free each commit
-    for (size_t i = 0; i < commit_count; i++) {
-        git_commit_free(commit_refs[i]);
+    for (size_t i = 0; i < graph.commit_count; i++) {
+        free(graph.commits[i]);
     }
-    free(commit_refs);
+    free(graph.commits);
     return 0;
 }
-
 
