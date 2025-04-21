@@ -8,6 +8,7 @@ Une application en C pour visualiser l'historique Git sous forme de graphique.
 - libgit2 (bibliothèque pour manipuler les dépôts Git)
 - ncurses (bibliothèque pour créer des interfaces en mode texte)
 - make
+- CMake 3.31 ou supérieur
 
 ## À propos de ncurses
 
@@ -25,9 +26,13 @@ Dans notre application, ncurses est utilisée pour créer une interface interact
    ```bash
    # Sur macOS avec Homebrew
    brew install libgit2 ncurses
+   brew install cmake
+   brew upgrade cmake
+   # dans .zshrc : alias cmake="/usr/local/bin/cmake"
    
    # Sur Ubuntu/Debian
    sudo apt-get install libgit2-dev libncurses-dev
+   sudo apt-get update cmake
    ```
 
 2. Compiler le projet :
