@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <git2.h>
-#include "types.h"
+
 #include "model.h"
-#include "model_tool.h"
+#include "types.h"
 
 void print_usage(const char *program_name) {
     printf("Usage: %s [options] [chemin_du_repo]\n\n", program_name);
@@ -57,6 +57,20 @@ RunArguments parse_arguments(int argc, char **argv) {
     return opts;
 }
 
+
+int doAction(git_repository * repo, RunArguments opts) {
+    git_reference **branch_refs;
+    size_t branch_count;
+    if (analyze_branches(repo, &branch_count, &branch_refs) < 0) {
+        return 1;
+    }
+
+    log_branches_details(branch_refs, branch_count);
+
+    free(branch_refs);
+    return 0;
+}
+
 int main(int argc, char **argv) {
     // Initialiser libgit2
     git_libgit2_init();
@@ -81,29 +95,9 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    // Créer et analyser le modèle
-    GraphModel *model = create_model(repo);
-    if (!model) {
-        printf("Erreur: Impossible de créer le modèle\n");
-        git_repository_free(repo);
-        git_libgit2_shutdown();
-        return 1;
-    }
+    const int r = doAction(repo, opts);
 
-    if (analyze_repository(model) < 0) {
-        printf("Erreur: Impossible d'analyser le repository\n");
-        free_model(model);
-        git_repository_free(repo);
-        git_libgit2_shutdown();
-        return 1;
-    }
-
-    // Afficher le modèle
-    print_model(model);
-
-    // Nettoyer
-    free_model(model);
     git_repository_free(repo);
     git_libgit2_shutdown();
-    return 0;
+    return r;
 }

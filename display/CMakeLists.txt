@@ -16,7 +16,11 @@ include_directories(${GIT2_INCLUDE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 # Créer l'exécutable
-add_executable(display main.c model.c model_tool.c)
+add_executable(display main.c
+        model.c
+        model.h
+        git_util.c
+        git_util.h)
 
 # Lier les bibliothèques
 target_link_libraries(display ${GIT2_LIBRARY})

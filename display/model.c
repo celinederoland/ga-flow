@@ -1,113 +1,50 @@
 #include "model.h"
-#include <stdlib.h>
-#include <string.h>
+
+#include <stdio.h>
 #include <git2.h>
 
-GraphModel* create_model(git_repository *repo) {
-    GraphModel *model = malloc(sizeof(GraphModel));
-    if (!model) return NULL;
+int analyze_branches(git_repository *repo, size_t *branch_count, git_reference ***branch_refs) {
+    *branch_count = 0;
+    git_strarray ref_list;
 
-    model->branches = NULL;
-    model->merges = NULL;
-    model->repo = repo;
-    return model;
-}
+    if (git_reference_list(&ref_list, repo) != 0) {
+        git_strarray_dispose(&ref_list);
+        *branch_refs = NULL;
+        return -1;
+    }
 
-void free_model(GraphModel *model) {
-    if (!model) return;
+    // Tableau pour stocker les références des branches
+    *branch_refs = malloc(ref_list.count * sizeof(git_reference *));
 
-    // Libérer les branches
-    Branch *branch = model->branches;
-    while (branch) {
-        Branch *next = branch->next;
-        
-        // Libérer les commits de la branche
-        Commit *commit = branch->head;
-        while (commit) {
-            Commit *next_commit = commit->parent;
-            free(commit->message);
-            free(commit->author);
-            free(commit);
-            commit = next_commit;
+    for (size_t i = 0; i < ref_list.count; i++) {
+        git_reference *ref;
+        if (git_reference_lookup(&ref, repo, ref_list.strings[i]) != 0) {
+            continue;
         }
-        
-        free(branch->name);
-        free(branch);
-        branch = next;
+        if (git_reference_is_branch(ref)) {
+            (*branch_refs)[(*branch_count)++] = ref;
+            fprintf(stderr, "Retrieve Branch %zu : %s\n", *branch_count, git_reference_shorthand(ref));
+        } else {
+            git_reference_free(ref);
+        }
     }
 
-    // Libérer les merges
-    Merge *merge = model->merges;
-    while (merge) {
-        Merge *next = merge->next;
-        free(merge);
-        merge = next;
+    git_strarray_dispose(&ref_list);
+    fprintf(stderr, "\n\n\n");
+    return 0;
+}
+
+void log_branches_details(git_reference **branch_refs, size_t branch_count) {
+    for (size_t i = 0; i < branch_count; i++) {
+        git_reference *ref = branch_refs[i];
+        const char *branch_name = git_reference_shorthand(ref);
+        git_oid *target = (git_oid *) git_reference_target(ref);
+        char oid_str[GIT_OID_HEXSZ + 1];
+        git_oid_fmt(oid_str, target);
+        oid_str[GIT_OID_HEXSZ] = '\0';
+        // NOTE : important - ici le oid que j'obtiens est celui du commit head
+        // ==> c'est à partir de là que je vais pouvoir remonter dans le graphe
+        printf("Retrieved Branch: %zu - %s -> %s\n", i, branch_name, oid_str);
+        git_reference_free(ref);
     }
-
-    free(model);
-}
-
-Branch* add_branch(GraphModel *model, const char *name, BranchType type) {
-    Branch *branch = malloc(sizeof(Branch));
-    if (!branch) return NULL;
-
-    branch->name = strdup(name);
-    branch->type = type;
-    branch->head = NULL;
-    branch->next = model->branches;
-    model->branches = branch;
-
-    return branch;
-}
-
-Commit* add_commit(GraphModel *model, Branch *branch, const git_oid *oid, CommitType type) {
-    Commit *commit = malloc(sizeof(Commit));
-    if (!commit) return NULL;
-
-    // Récupérer les informations du commit
-    git_commit *git_commit;
-    if (git_commit_lookup(&git_commit, model->repo, oid) < 0) {
-        free(commit);
-        return NULL;
-    }
-
-    // Copier l'OID
-    git_oid_cpy(&commit->oid, oid);
-
-    // Copier le message
-    const char *message = git_commit_message(git_commit);
-    commit->message = strdup(message);
-
-    // Copier l'auteur
-    const git_signature *author = git_commit_author(git_commit);
-    commit->author = strdup(author->name);
-
-    // Copier la date
-    commit->time = git_commit_time(git_commit);
-
-    // Définir le type
-    commit->type = type;
-
-    // Lier au commit précédent
-    commit->parent = branch->head;
-    commit->merged = NULL;
-
-    // Mettre à jour la tête de la branche
-    branch->head = commit;
-
-    git_commit_free(git_commit);
-    return commit;
-}
-
-Merge* add_merge(GraphModel *model, Commit *from, Commit *to, Branch *target_branch) {
-    Merge *merge = malloc(sizeof(Merge));
-    if (!merge) return NULL;
-
-    merge->from = from;
-    merge->to = to;
-    merge->target_branch = target_branch;
-    merge->next = model->merges;
-    model->merges = merge;
-
-    return merge;
 }
