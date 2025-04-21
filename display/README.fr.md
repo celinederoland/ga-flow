@@ -7,6 +7,7 @@ Une application en C pour visualiser l'historique Git sous forme de graphique.
 - GCC (compilateur C)
 - libgit2 (bibliothèque pour manipuler les dépôts Git)
 - make
+- CMake 3.31 ou supérieur
 
 ## Installation
 
@@ -14,9 +15,13 @@ Une application en C pour visualiser l'historique Git sous forme de graphique.
    ```bash
    # Sur macOS avec Homebrew
    brew install libgit2
-   
+   brew install cmake
+   brew upgrade cmake
+   # dans .zshrc : alias cmake="/usr/local/bin/cmake"
+
    # Sur Ubuntu/Debian
    sudo apt-get install libgit2-dev
+   sudo apt-get update cmake
    ```
 
 2. Compiler le projet :
